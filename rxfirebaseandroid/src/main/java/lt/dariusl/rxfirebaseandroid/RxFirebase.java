@@ -207,7 +207,7 @@ public class RxFirebase {
                     }
                 }));
             }
-        }).startWith(firebase.getAuth());
+        }).startWith(firebase.getAuth()).distinctUntilChanged();
     }
 
     public static Observable<AuthData> authAnonymously(Firebase firebase){
