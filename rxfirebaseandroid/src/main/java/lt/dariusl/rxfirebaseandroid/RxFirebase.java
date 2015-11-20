@@ -12,11 +12,14 @@ import com.firebase.client.ValueEventListener;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.util.Map;
 
 import rx.Observable;
+import rx.Observer;
 import rx.Subscriber;
 import rx.functions.Action0;
 import rx.functions.Func1;
+import rx.subjects.BehaviorSubject;
 import rx.subscriptions.Subscriptions;
 
 /**
@@ -174,27 +177,16 @@ public class RxFirebase {
         });
     }
 
-    public static Observable<Void> setValue(final Firebase firebase, final Object value){
-        return Observable.create(new Observable.OnSubscribe<Void>() {
-            @Override
-            public void call(final Subscriber<? super Void> subscriber) {
-                firebase.setValue(value, new Firebase.CompletionListener() {
-                    @Override
-                    public void onComplete(FirebaseError firebaseError, Firebase firebase) {
-                        if (subscriber.isUnsubscribed()) {
-                            return;
-                        }
+    public static Observable<Firebase> setValue(Firebase firebase, Object value){
+        final BehaviorSubject<Firebase> subject = BehaviorSubject.create();
+        firebase.setValue(value, new ObservableCompletionListener(subject));
+        return subject;
+    }
 
-                        if (firebaseError == null) {
-                            subscriber.onNext(null);
-                            subscriber.onCompleted();
-                        } else {
-                            subscriber.onError(new FirebaseException(firebaseError));
-                        }
-                    }
-                });
-            }
-        });
+    public static Observable<Firebase> updateChildren(Firebase firebase, Map<String, Object> children){
+        final BehaviorSubject<Firebase> subject = BehaviorSubject.create();
+        firebase.updateChildren(children, new ObservableCompletionListener(subject));
+        return subject;
     }
 
     public static Observable<AuthData> observeAuth(final Firebase firebase){
@@ -216,5 +208,62 @@ public class RxFirebase {
                 }));
             }
         }).startWith(firebase.getAuth());
+    }
+
+    public static Observable<AuthData> authAnonymously(Firebase firebase){
+        final BehaviorSubject<AuthData> subject = BehaviorSubject.create();
+        firebase.authAnonymously(new ObservableAuthResultHandler(subject));
+        return subject;
+    }
+
+    public static Observable<AuthData> authWithOAuthToken(Firebase firebase, String provider, String token){
+        final BehaviorSubject<AuthData> subject = BehaviorSubject.create();
+        firebase.authWithOAuthToken(provider, token, new ObservableAuthResultHandler(subject));
+        return subject;
+    }
+
+    public static Observable<AuthData> authWithCustomToken(Firebase firebase, String token){
+        final BehaviorSubject<AuthData> subject = BehaviorSubject.create();
+        firebase.authWithCustomToken(token, new ObservableAuthResultHandler(subject));
+        return subject;
+    }
+
+    private static class ObservableAuthResultHandler implements Firebase.AuthResultHandler{
+
+        private final Observer<AuthData> observer;
+
+        private ObservableAuthResultHandler(Observer<AuthData> observer) {
+            this.observer = observer;
+        }
+
+        @Override
+        public void onAuthenticated(AuthData authData) {
+            observer.onNext(authData);
+            observer.onCompleted();
+        }
+
+        @Override
+        public void onAuthenticationError(FirebaseError firebaseError) {
+            observer.onError(new FirebaseException(firebaseError));
+        }
+    }
+
+    private static class ObservableCompletionListener implements Firebase.CompletionListener{
+
+        private final Observer<Firebase> observer;
+
+        private ObservableCompletionListener(Observer<Firebase> observer) {
+            this.observer = observer;
+        }
+
+        @Override
+        public void onComplete(FirebaseError firebaseError, Firebase firebase) {
+            if (firebaseError == null){
+                observer.onNext(firebase);
+                observer.onCompleted();
+            } else {
+                observer.onError(new FirebaseException(firebaseError));
+            }
+        }
     }
 }
