@@ -28,7 +28,7 @@ proguard/
 
 
 ## Directory-based project format:
-.idea/
+.idea/*
 
 ## File-based project format:
 *.ipr
@@ -79,7 +79,6 @@ trestle.keystore
 hs_err_pid*
 
 # Misc
-/.idea/workspace.xml
 .DS_Store
 /captures
 **/*.iml
