@@ -1,0 +1,5 @@
+image: android
+env:
+script:
+  - ./gradlew test assemble -PdisablePreDex
+notify:
