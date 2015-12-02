@@ -1,5 +1,6 @@
 image: android
 env:
 script:
+  - chmod +x gradlew
   - ./gradlew test assemble -PdisablePreDex
 notify:
