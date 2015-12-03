@@ -3,4 +3,6 @@ env:
 script:
   - chmod +x gradlew
   - ./gradlew test assemble -PdisablePreDex
+cache:
+  - /home/.gradle
 notify:
