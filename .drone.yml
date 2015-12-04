@@ -2,7 +2,7 @@ image: android
 env:
 script:
   - chmod +x gradlew
-  - ./gradlew test assemble -PdisablePreDex
+  - ./gradlew testDebug
 cache:
   - /home/.gradle
 notify:
