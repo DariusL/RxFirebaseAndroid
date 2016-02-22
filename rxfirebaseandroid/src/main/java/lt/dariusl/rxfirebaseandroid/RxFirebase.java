@@ -46,6 +46,10 @@ public class RxFirebase {
             this.eventType = eventType;
             this.prevName = prevName;
         }
+
+        public <V> FirebaseChildEvent<V> withValue(V value){
+            return new FirebaseChildEvent<>(value, eventType, prevName);
+        }
     }
 
     public static class FirebaseException extends RuntimeException {
