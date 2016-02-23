@@ -27,7 +27,7 @@ import rx.subscriptions.Subscriptions;
  */
 public class RxFirebase {
 
-    public static class FirebaseChildEvent {
+    public static class FirebaseChildEvent <T> {
         @Retention(RetentionPolicy.SOURCE)
         @IntDef({TYPE_ADD, TYPE_CHANGE, TYPE_MOVE, TYPE_REMOVE})
         public @interface EventType{}
@@ -37,14 +37,18 @@ public class RxFirebase {
         public static final int TYPE_REMOVE = 3;
         public static final int TYPE_MOVE = 4;
 
-        public final DataSnapshot snapshot;
+        public final T value;
         public final @EventType int eventType;
         public final String prevName;
 
-        public FirebaseChildEvent(DataSnapshot snapshot, @EventType int eventType, String prevName) {
-            this.snapshot = snapshot;
+        public FirebaseChildEvent(T value, @EventType int eventType, String prevName) {
+            this.value = value;
             this.eventType = eventType;
             this.prevName = prevName;
+        }
+
+        public <V> FirebaseChildEvent<V> withValue(V value){
+            return new FirebaseChildEvent<>(value, eventType, prevName);
         }
     }
 
@@ -61,30 +65,30 @@ public class RxFirebase {
         }
     }
 
-    public static Observable<FirebaseChildEvent> observeChildren(final Query ref) {
-        return Observable.create(new Observable.OnSubscribe<FirebaseChildEvent>() {
+    public static Observable<FirebaseChildEvent<DataSnapshot>> observeChildren(final Query ref) {
+        return Observable.create(new Observable.OnSubscribe<FirebaseChildEvent<DataSnapshot>>() {
 
             @Override
-            public void call(final Subscriber<? super FirebaseChildEvent> subscriber) {
+            public void call(final Subscriber<? super FirebaseChildEvent<DataSnapshot>> subscriber) {
                 final ChildEventListener listener = ref.addChildEventListener(new ChildEventListener() {
                     @Override
                     public void onChildAdded(DataSnapshot dataSnapshot, String prevName) {
-                        subscriber.onNext(new FirebaseChildEvent(dataSnapshot, FirebaseChildEvent.TYPE_ADD, prevName));
+                        subscriber.onNext(new FirebaseChildEvent<>(dataSnapshot, FirebaseChildEvent.TYPE_ADD, prevName));
                     }
 
                     @Override
                     public void onChildChanged(DataSnapshot dataSnapshot, String prevName) {
-                        subscriber.onNext(new FirebaseChildEvent(dataSnapshot, FirebaseChildEvent.TYPE_CHANGE, prevName));
+                        subscriber.onNext(new FirebaseChildEvent<>(dataSnapshot, FirebaseChildEvent.TYPE_CHANGE, prevName));
                     }
 
                     @Override
                     public void onChildRemoved(DataSnapshot dataSnapshot) {
-                        subscriber.onNext(new FirebaseChildEvent(dataSnapshot, FirebaseChildEvent.TYPE_REMOVE, null));
+                        subscriber.onNext(new FirebaseChildEvent<>(dataSnapshot, FirebaseChildEvent.TYPE_REMOVE, null));
                     }
 
                     @Override
                     public void onChildMoved(DataSnapshot dataSnapshot, String prevName) {
-                        subscriber.onNext(new FirebaseChildEvent(dataSnapshot, FirebaseChildEvent.TYPE_MOVE, prevName));
+                        subscriber.onNext(new FirebaseChildEvent<>(dataSnapshot, FirebaseChildEvent.TYPE_MOVE, prevName));
                     }
 
                     @Override
@@ -113,19 +117,19 @@ public class RxFirebase {
         };
     }
 
-    public static Observable<FirebaseChildEvent> observeChildAdded(Query ref) {
+    public static Observable<FirebaseChildEvent<DataSnapshot>> observeChildAdded(Query ref) {
         return observeChildren(ref).filter(makeEventFilter(FirebaseChildEvent.TYPE_ADD));
     }
 
-    public static Observable<FirebaseChildEvent> observeChildChanged(Query ref) {
+    public static Observable<FirebaseChildEvent<DataSnapshot>> observeChildChanged(Query ref) {
         return observeChildren(ref).filter(makeEventFilter(FirebaseChildEvent.TYPE_CHANGE));
     }
 
-    public static Observable<FirebaseChildEvent> observeChildMoved(Query ref) {
+    public static Observable<FirebaseChildEvent<DataSnapshot>> observeChildMoved(Query ref) {
         return observeChildren(ref).filter(makeEventFilter(FirebaseChildEvent.TYPE_MOVE));
     }
 
-    public static Observable<FirebaseChildEvent> observeChildRemoved(Query ref) {
+    public static Observable<FirebaseChildEvent<DataSnapshot>> observeChildRemoved(Query ref) {
         return observeChildren(ref).filter(makeEventFilter(FirebaseChildEvent.TYPE_REMOVE));
     }
 
@@ -157,7 +161,7 @@ public class RxFirebase {
         });
     }
 
-    public static Observable<DataSnapshot> observeSingle(final Query ref){
+    public static Observable<DataSnapshot> observeOnce(final Query ref){
         return Observable.create(new Observable.OnSubscribe<DataSnapshot>() {
             @Override
             public void call(final Subscriber<? super DataSnapshot> subscriber) {
