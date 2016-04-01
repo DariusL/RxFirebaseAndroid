@@ -232,6 +232,12 @@ public class RxFirebase {
         return subject;
     }
 
+    public static Observable<AuthData> authWithPassword(Firebase firebase, String email, String password) {
+        final BehaviorSubject<AuthData> subject = BehaviorSubject.create();
+        firebase.authWithPassword(email, password, new ObservableAuthResultHandler(subject));
+        return subject;
+    }
+
     private static class ObservableAuthResultHandler implements Firebase.AuthResultHandler{
 
         private final Observer<AuthData> observer;
