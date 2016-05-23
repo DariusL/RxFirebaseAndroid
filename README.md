@@ -4,6 +4,8 @@ A simple wrapper around most Firebase functions with RxJava. Not all functions a
 
 Since this is my first library, the maven central repo might spontaneously combust.
 
+For the new version under Google, check out [RxRoboBase](https://github.com/DariusL/RxRoboBase).
+
 #Setup
 ##Gradle
     compile 'com.github.dariusl:rxfirebaseandroid:0.5.0'
